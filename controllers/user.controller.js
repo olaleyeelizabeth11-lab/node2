@@ -1,13 +1,13 @@
-const Customer = require('../models/user.model');
-const ejs = require  ('ejs')
-const bcrypt = require("bcryptjs");
+const Customer = require("../models/user.model");
+const ejs = require('ejs')
+const bcrypt = require('bcryptjs')
 const nodemailer = require('nodemailer');
-// const { redirect } = require('express/lib/response');
 
 
-const getSignup = (req, res)=>{
+const getSignup = (req, res) => {
     res.render("signup");
 }
+
 const getSignin = (req, res) => {   
     res.render("signin");
 }
@@ -17,23 +17,23 @@ const getDashboard = (req, res) => {
 }
 
 const postSignup = (req, res) => {
-    let salt =bcrypt.genSaltSync(10);
+    let salt = bcrypt.genSaltSync(10);
     let hashedPassword = bcrypt.hashSync(req.body.password, salt);
-
-
-    req.body.password = hashedPassword;
-    const user = req.body;
-    const newCustomer = new Customer(user);
-    // console.log(
-        // user
-    // );
     
+    // Overwrite the plain password with the hashed one
+    req.body.password = hashedPassword;
+
+    const user = req.body;
+    
+    const newCustomer = new Customer(user);
 
     newCustomer.save()
-    .then((user)=>{
-        newCustomer.password = hashedPassword;
-        console.log("user saved",user);
-         let transporter = nodemailer.createTransport({
+        .then((user) => {
+            newCustomer.password = hashedPassword;
+            console.log("Customer saved:", user);
+
+            // Transporter means the informarion about the service you are using to send the email
+            let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
                     user: 'adedayodaniel1711@gmail.com',
@@ -43,10 +43,11 @@ const postSignup = (req, res) => {
                     pass: 'mawl exta bquu strt'
                 }
             });
-             // This is the information about the email you are sending
+
+            // This is the information about the email you are sending
             let mailOptions = {
                 from: 'adedayodaniel1711@gmail.com',
-                to: [user.email, "victoryajayi90@gmail.com"],
+                to: [user.email],
                 subject: 'Welcome to our Application',
                 html: 
                 `
@@ -67,6 +68,7 @@ const postSignup = (req, res) => {
                 `
                 
             };
+            // This is what will actually send the email
             transporter.sendMail(mailOptions, function(error, info){
             if (error) {
                 console.log(error);
@@ -75,22 +77,13 @@ const postSignup = (req, res) => {
             }
             });
 
-        res.redirect("/user/signin");
-    // res.send("Registration successful!");
-     // Added response to prevent hanging
-    })
-    .catch((err)=>{
-        console.error("error saving to db",err);
-    res.status(500).send("error" + err.message); // Added response to prevent hanging
-        
-    })
-    // users.push(user)
-    // console.log(users);
-    
-    // console.log('User Data:', req.body);
-    // res.send("Registration successful!"); // Added response to prevent hanging
+            res.redirect("/user/signin");
+        })
+        .catch((err) => {
+            console.error("Error saving to DB:", err);
+            res.status(500).send("Error: " + err.message);
+        });
 }
-
 
 const postSignin = (req, res) => {
     const { email, password } = req.body;
@@ -101,18 +94,36 @@ const postSignin = (req, res) => {
                 console.log("Invalid email");
                 return res.status(400).json({message: "Invalid email or password"})
             } 
-                console.log("Login Successful for", foundCustomers.email);
-                const isMatch = bcrypt.compareSync(password, foundCustomers.password);
-
-                if(!isMatch){
-                    console.log("invalid password");
-                    return res.status(400).json({message: "invalid email or password"});
-                }
+            // if (foundCustomers.password !== password) {
+            //     console.log("Invalid Password");
+            //     return res.status(400).json({ message: "Invalid email or password"});
+            // }
 
 
+            // Compare provided password with hashed one
+            const isMatch = bcrypt.compareSync(password, foundCustomers.password);
 
+            if(!isMatch) {
+                console.log("Invalid Password");
+                return res.status(400).json({ message: "Invalid email or password"});
+            }
+
+
+            
             res.redirect("/user/dashboard");
- 
+
+            // Success
+            return res.json({
+                message: "Login Successful",
+                user: {
+                    id: foundCustomers._id,
+                    email: foundCustomers.email,
+                    firstName: foundCustomers.firstName,
+                    lastName: foundCustomers.lastName
+                }
+            })
+
+
             
         })
         .catch((err) => {
@@ -121,4 +132,6 @@ const postSignin = (req, res) => {
         });
 }
 
-module.exports = {postSignup, getSignup, postSignin, getSignin, getDashboard}
+
+
+module.exports = { postSignup, getSignup, postSignin, getSignin, getDashboard }
