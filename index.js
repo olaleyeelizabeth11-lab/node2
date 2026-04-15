@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 // const port = 2000;
-const users =[]
+// const users =[]
 
 const dotenv = require('dotenv')
 const mongoose = require('mongoose')
@@ -12,25 +12,18 @@ dotenv.config();
 const port = process.env.port || 2000;
 const URI = process.env.MONGODB_URI;
 
-console.log("MongoDB URI loaded:", Boolean(URI));
-console.log("App port:", port);
-
-mongoose.connect(URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 10000,
-})
+// Configuration & Middleware
+app.set("view engine", "ejs")
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+mongoose.connect(URI)
   .then(() => {
     console.log("Success! MongoDB is connected. ✅");
-    app.listen(port, () => {
-      console.log(`Server running at http://localhost:${port}`);
-    });
   })
   .catch(err => {
     console.error("MongoDB connection error: ❌");
-    console.error(err);
-    process.exit(1);
-  });
+    });
 
 // Mock Data
 // const students = [
@@ -40,11 +33,6 @@ mongoose.connect(URI, {
 //     { Name: "tola ola", Age: 26, Grade: 'A' },
 // ];
 
-// Configuration & Middleware
-app.set("view engine", "ejs")
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 
 // let customerSchema = mongoose.Schema({
@@ -115,6 +103,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/user", userRoute);
 
 // Start Server
-// app.listen(port, () => {
-//     console.log(`Server running at http://localhost:${port}`);
-// });
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
