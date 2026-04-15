@@ -9,16 +9,27 @@ const mongoose = require('mongoose')
 const userRoute = require('./routes/user.route')
 dotenv.config();
 
-const port = process.env.port
+const port = process.env.port || 2000;
 const URI = process.env.MONGODB_URI;
 
+console.log("MongoDB URI loaded:", Boolean(URI));
+console.log("App port:", port);
 
-mongoose.connect(URI)
-  .then(() => console.log("Success! MongoDB is connected. ✅"))
+mongoose.connect(URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000,
+})
+  .then(() => {
+    console.log("Success! MongoDB is connected. ✅");
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+    });
+  })
   .catch(err => {
-    console.error("Connection Error Logic: ❌");
-    console.error(err.code); // Look for 'ECONNREFUSED' vs 'ETIMEDOUT'
-    console.error(err.message);
+    console.error("MongoDB connection error: ❌");
+    console.error(err);
+    process.exit(1);
   });
 
 // Mock Data
@@ -104,6 +115,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/user", userRoute);
 
 // Start Server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//     console.log(`Server running at http://localhost:${port}`);
+// });
